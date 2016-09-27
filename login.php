@@ -1,10 +1,18 @@
 <?php 
 	
 	require("../../config.php");
+	require("functions.php");
 	
-	//Aplikatsiooni ideeks Powernap, kus inimene saab kahe kliki vajutusega muusika klappides mängima panna vastavalt ajale.
-	//Avan äpi valin aja 15min, 20min vms ning terve aja vältel tuleb vastavalt minu soovile muusika ning äratab alarmiga üles.
-	//Idee mõtteks on võimaldada lõunapausidel, vaheaegadel puhata
+	// kui on juba sisse loginud siis suunan data lehele
+	if (isset($_SESSION["userId"])){
+		
+		//suunan sisselogimise lehele
+		header("Location: data.php");
+		
+	}
+	
+
+	//echo hash("sha512", "b");
 	
 	
 	//GET ja POSTi muutujad
@@ -19,9 +27,50 @@
 	$signupPasswordError = "";
 	$signupEmail = "";
 	$signupGender = "";
+	$loginEmail ="";
+	$loginEmailError = "";
+	$loginPassword = "";
+	$loginPasswordError = "";
 	
+	
+
 	// on üldse olemas selline muutja
-	if( isset( $_POST["signupEmail"] ) ){
+	if( isset( $_POST["loginEmail"] ) ){
+		
+		//jah on olemas
+		//kas on tühi
+		if( empty( $_POST["loginEmail"] ) ){
+			
+			$loginEmailError = "See väli on kohustuslik";
+			
+		} else {
+			
+			// email olemas 
+			$loginEmail = $_POST["loginEmail"];
+			
+		}
+		
+	} 
+	
+		// on üldse olemas selline muutja
+	if( isset( $_POST["loginPassword"] ) ){
+		
+		//jah on olemas
+		//kas on tühi
+		if( empty( $_POST["loginPassword"] ) ){
+			
+			$loginPasswordError = "See väli on kohustuslik";
+			
+		} else {
+			
+			// email olemas 
+			$loginPassword = $_POST["loginPassword"];
+			
+		}
+		
+	} 
+	
+		if( isset( $_POST["signupEmail"] ) ){
 		
 		//jah on olemas
 		//kas on tühi
@@ -37,6 +86,7 @@
 		}
 		
 	} 
+	
 	if( isset( $_POST["signupPassword"] ) ){
 		
 		if( empty( $_POST["signupPassword"] ) ){
@@ -57,9 +107,7 @@
 			
 		}
 		
-	}	
-
-	
+	}
 	
 	
 	// GENDER
@@ -95,39 +143,25 @@
 		
 		//echo $serverUsername;
 		
-		// ÜHENDUS
-		$database = "if16_andryzag";
-		$mysqli = new mysqli($serverHost, $serverUsername, $serverPassword, $database);
+		// KASUTAN FUNKTSIOONI
+		signUp($signupEmail, $password);
 		
-		// meie serveris nagunii 
-		if ($mysqli->connect_error) {
-			die('Connect Error: ' . $mysqli->connect_error);
-		}
-		
-		// sqli rida
-		$stmt = $mysqli->prepare("INSERT INTO user_sample (email, password) VALUES (?, ?)");
-		
-		// stringina üks täht iga muutuja kohta (?), mis tüüp
-		// string - s
-		// integer - i
-		// float (double) - d
-		// küsimärgid asendada muutujaga
-		$stmt->bind_param("ss", $signupEmail, $password);
-		
-		//täida käsku
-		if($stmt->execute()) {
-			
-			echo "salvestamine õnnestus";
-			
-		} else {
-		 	echo "ERROR ".$stmt->error;
-		}
-		
-		//panen ühenduse kinni
-		$stmt->close();
-		$mysqli->close();
 	
 	}
+	
+	
+	$error ="";
+	if ( isset($_POST["loginEmail"]) && isset($_POST["loginPassword"]) && 
+		!empty($_POST["loginEmail"]) && !empty($_POST["loginPassword"])
+	  ) {
+		  
+		$error = login($_POST["loginEmail"], $_POST["loginPassword"]);
+		
+	}
+	
+	
+	
+
 ?>
 <!DOCTYPE html>
 <html>
@@ -136,38 +170,38 @@
 </head>
 <body>
 
-	<h1>Logi sisse</h1>
+<h1 style="color:Red;">Logi sisse</h1>
 	<form method="POST">
+		<p style="color:red;"><?=$error;?></p>
 		
-		<label>E-post</label>
-		<br>
 		
-		<input name="loginEmail" type="text">
+		<input name="loginEmail" placeholder="E-post" value="<?=$loginEmail;?>"><?php echo $loginEmailError; ?>
+		
 		<br><br>
 		
-		<input type="password" name="loginPassword" placeholder="Parool">
+		<input type="password" name="loginPassword" placeholder="Parool"><?php echo $loginPasswordError; ?>
 		<br><br>
 		
 		<input type="submit" value="Logi sisse">
-		
-		
 	</form>
 	
 	
 	<h1>Loo kasutaja</h1>
 	<form method="POST">
 		
-		<label>E-post</label>
+	
+		
+		
+		<input type="username" name="signupEmail" placeholder="E-Post"> <?php echo $signupEmailError; ?>
 		<br>
 		
-		<input name="signupEmail" type="text" value="<?=$signupEmail;?>"> <?=$signupEmailError;?>
-		<br><br>
 		
+		
+		<br>
 		<input type="password" name="signupPassword" placeholder="Parool"> <?php echo $signupPasswordError; ?>
 		<br><br>
 		
-		
-				<?php if($signupGender == "male") { ?>
+			<?php if($signupGender == "male") { ?>
 			<input type="radio" name="signupGender" value="male" checked> Male<br>
 		<?php }else { ?>
 			<input type="radio" name="signupGender" value="male"> Male<br>
@@ -186,6 +220,8 @@
 		<?php } ?>
 		<br>
 		<input type="submit" value="Loo kasutaja">
+		
+		
 		
 		
 	</form>
